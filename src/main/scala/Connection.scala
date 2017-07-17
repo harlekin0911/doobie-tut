@@ -21,6 +21,27 @@ object Connection {
 		   println(o)
 
 
+		   val program3 = for {
+			     a <- sql"select 42".query[Int].unique
+			     b <- sql"select random()".query[Double].unique
+		   } yield (a, b)
+
+		   println(program3)
+		   
+		   println( program3.transact(xa).unsafePerformIO)
+		   
+		   val program3a = {
+           val a = sql"select 42".query[Int].unique
+           val b = sql"select random()".query[Double].unique
+           (a |@| b).tupled
+       }
+
+		   program3a.replicateM(5).transact(xa).unsafePerformIO.foreach(println)
+
+
+		   val kleisli = program1.transK[IOLite] 
+		   val task4 = IOLite.primitive(null: java.sql.Connection) >>= kleisli.run
+		   task4.unsafePerformIO
 
   }
 
